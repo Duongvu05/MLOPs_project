@@ -10,6 +10,7 @@
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=flat&logo=kubernetes&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232088FF.svg?style=flat&logo=githubactions&logoColor=white)
+![Weights & Biases](https://img.shields.io/badge/Weights_&_Biases-FFCC33?style=flat&logo=WeightsAndBiases&logoColor=black)
 
 A deep learning project for automated detection of spinal pathology from MRI DICOM images using the PhenikaaMed dataset. This project implements multi-label classification to detect four types of spinal pathology: disc herniation, disc bulging, spondylolisthesis, and disc narrowing.
 
