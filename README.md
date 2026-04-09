@@ -39,21 +39,16 @@ Predict 4 independent binary pathology labels:
 - CUDA-capable GPU (recommended for training)
 - [uv](https://astral.sh/uv/) package manager (fast package and environment manager)
 
-### Step 1: Initialize Environment
+### Setup Environment
+
+This project utilizes `uv` with `pyproject.toml` and `uv.lock` for exact, blazingly fast dependency resolution.
 
 ```bash
-# Create virtual environment using uv
-uv venv --python 3.10
+# Sync dependencies and automatically create the virtual environment
+uv sync
+
+# Activate the environment
 source .venv/bin/activate
-```
-
-### Step 2: Install PyTorch with CUDA
-
-For NVIDIA RTX 3060 (CUDA 11.8 recommended):
-
-```bash
-# Install PyTorch using uv pip
-uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
 
 Verify CUDA installation:
@@ -61,27 +56,24 @@ Verify CUDA installation:
 python -c "import torch; print('CUDA available:', torch.cuda.is_available()); print('CUDA version:', torch.version.cuda)"
 ```
 
-### Step 3: Install Project Dependencies
+## Quick Start (Training & Testing)
+
+### Training
+Train the optimal model architecture (EfficientNet-B1) on the pathology dataset:
 
 ```bash
-# Install all required packages with uv
-uv pip install -r requirements.txt
-
-# (Optional) Install code quality dependencies (ruff, pyright, pytest)
-uv pip install ruff pyright pytest
+uv run python scripts/train_pathology_model.py --backbone efficientnet_b1
 ```
+*Model checkpoints and optimal thresholds will be saved to `outputs/pathology_model/runs/`.*
 
-### Step 4: Verify Installation
+### Testing / Evaluation
+Evaluate a trained model using the validation/test sets to generate the performance metrics:
 
 ```bash
-# Verify MONAI installation
-python -c "import monai; print('MONAI version:', monai.__version__)"
-
-# Verify all imports
-python -c "from models.pathology_model import create_pathology_model; print('✓ Models OK')"
-python -c "from utils.multi_sequence_dataset import MultiSequencePathologyDataset; print('✓ Multi-sequence Dataset OK')"
-python -c "from training.pathology_training_utils import train_epoch; print('✓ Training utils OK')"
+uv run python scripts/evaluate_pathology_model.py --backbone efficientnet_b1
 ```
+*(Tip: Add the `--all` flag instead to evaluate and compare across all trained architectures).*
+
 
 
 ## Model Architectures
