@@ -109,3 +109,6 @@ test_*
 convert_images.py
 README_Pfirrman.md
 scripts/create_*.py
+
+# Hide agent rules
+.agent/
