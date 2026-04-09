@@ -1,0 +1,14 @@
+.venv
+.git
+.gitignore
+__pycache__
+*.pyc
+.ruff_cache
+.pytest_cache
+outputs
+wandb
+
+# Models and data depending on user setup
+# (Leaving these up to context, but typically you might mount them)
+# models/
+# test_results.json
