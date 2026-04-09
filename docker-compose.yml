@@ -1,0 +1,25 @@
+services:
+  mri_phen:
+    build: .
+    image: mri_phen:latest
+    container_name: mri_phen_container
+    # Auto-start the FastAPI Uvicorn Server on Container Boot
+    command: uv run uvicorn serving.app:app --host 0.0.0.0 --port 8000
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the current directory to easily sync code changes
+      # Exclude .venv so the container uses its own environment
+      - .:/app
+      - /app/.venv
+      # Share ipc for PyTorch dataloader workers
+    ipc: host
+    environment:
+      - WANDB_API_KEY=${WANDB_API_KEY:-}

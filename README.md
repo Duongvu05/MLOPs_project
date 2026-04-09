@@ -6,9 +6,12 @@
 ![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)
 ![Pyright](https://img.shields.io/badge/type_checking-pyright-green.svg)
 ![Pytest](https://img.shields.io/badge/testing-pytest-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=flat&logo=kubernetes&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/github%20actions-%232088FF.svg?style=flat&logo=githubactions&logoColor=white)
 
-A deep learning project for automated detection of spinal pathology from MRI DICOM images using the PhenikaaMed dataset. **Note: The dataset utilized in this project is officially permitted and provided by Phenikaa Hospital for research and development purposes.** This project implements multi-label classification to detect four types of spinal pathology: disc herniation, disc bulging, spondylolisthesis, and disc narrowing.
-
+A deep learning project for automated detection of spinal pathology from MRI DICOM images using the PhenikaaMed dataset. This project implements multi-label classification to detect four types of spinal pathology: disc herniation, disc bulging, spondylolisthesis, and disc narrowing.
 
 ## Project Overview
 
@@ -22,14 +25,16 @@ This project provides a complete pipeline for:
 - **Experiment tracking** with Weights & Biases (wandb)
 - **Threshold optimization** for improved precision-recall balance
 
-### Task
-
 Predict 4 independent binary pathology labels:
 1. **Disc herniation** - Herniated disc material
 2. **Disc bulging** - Disc bulging beyond normal boundaries
 3. **Spondylolisthesis** - Vertebral slippage
 4. **Disc narrowing** - Disc space narrowing
 
+---
+
+
+---
 
 ## Installation
 
@@ -38,6 +43,7 @@ Predict 4 independent binary pathology labels:
 - Python 3.8 or 3.10 (3.10 recommended)
 - CUDA-capable GPU (recommended for training)
 - [uv](https://astral.sh/uv/) package manager (fast package and environment manager)
+- Docker & Docker Compose (for API Serving)
 
 ### Setup Environment
 
@@ -56,9 +62,11 @@ Verify CUDA installation:
 python -c "import torch; print('CUDA available:', torch.cuda.is_available()); print('CUDA version:', torch.version.cuda)"
 ```
 
-## Quick Start (Training & Testing)
+---
 
-### Training
+## Quick Start 
+
+### 1. Training
 Train the optimal model architecture (EfficientNet-B1) on the pathology dataset:
 
 ```bash
@@ -66,7 +74,7 @@ uv run python scripts/train_pathology_model.py --backbone efficientnet_b1
 ```
 *Model checkpoints and optimal thresholds will be saved to `outputs/pathology_model/runs/`.*
 
-### Testing / Evaluation
+### 2. Testing / Evaluation
 Evaluate a trained model using the validation/test sets to generate the performance metrics:
 
 ```bash
@@ -74,7 +82,20 @@ uv run python scripts/evaluate_pathology_model.py --backbone efficientnet_b1
 ```
 *(Tip: Add the `--all` flag instead to evaluate and compare across all trained architectures).*
 
+### 3. API Model Serving (Web UI & Docker)
+To run the natively containerized Patient Diagnosis Web UI and API Endpoints:
 
+```bash
+# Build and run background Docker containers natively
+sudo docker compose build
+sudo docker compose up -d
+```
+The FastAPI instance will boot automatically. Open your browser to access the Clinical Portal at:
+**📍 Web UI:** [http://localhost:8000](http://localhost:8000)
+
+*(To check Swagger internal API Docs: [http://localhost:8000/docs](http://localhost:8000/docs))*
+
+---
 
 ## Model Architectures
 
@@ -107,6 +128,7 @@ uv run python scripts/evaluate_pathology_model.py --backbone efficientnet_b1
 - **For experimentation**: Try ViT-Base for attention-based features
 - **For production**: EfficientNet-B1 with SAG-T2 sequences offers the best balance of diagnostic precision and computational efficiency
 
+---
 
 ## Current Results
 
