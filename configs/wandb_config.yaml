@@ -1,0 +1,259 @@
+# Weights & Biases (wandb) Configuration Template
+# Copy and customize this file for your experiments
+
+# Project settings
+project:
+  name: "mri-phenotyping"  # Your wandb project name
+  entity: null  # Your wandb entity/team (optional, set to null if using personal account)
+
+# Run settings
+run:
+  name: "baseline-experiment"  # Experiment name (will be auto-generated if not set)
+  tags: []  # Tags for organizing runs, e.g., ["baseline", "resnet50", "augmentation"]
+  notes: ""  # Description or notes for this experiment
+  mode: "online"  # "online", "offline", or "disabled"
+  resume: null  # Resume mode: "allow", "must", "never", or specific run_id
+
+# Logging settings
+logging:
+  log_frequency: 10  # Log metrics every N steps/epochs
+  log_images: true  # Whether to log images
+  log_predictions: true  # Whether to log prediction tables
+  log_artifacts: true  # Whether to log model and data artifacts
+
+# Artifact settings
+artifacts:
+  log_model_checkpoints: false  # Log model checkpoints as artifacts (set to false to disable uploads)
+  checkpoint_frequency: 1  # Log checkpoint every N epochs
+  log_best_model: true  # Always log best model
+  log_data_splits: true  # Log train/val/test split manifests
+  log_configs: true  # Log configuration files
+
+# Hyperparameters (example - customize for your model)
+hyperparameters:
+  # Task configuration
+  task:
+    type: "multi_label"  # "multi_label" for pathology (4 labels) or "binary" for simple binary classification
+    num_labels: 4  # Number of pathology types: disc_herniation, disc_bulging, spondylolisthesis, disc_narrowing
+    label_names: ["disc_herniation", "disc_bulging", "spondylolisthesis", "disc_narrowing"]
+  
+  # Model parameters
+  model:
+    # Architecture options (ALL use multi-sequence fusion):
+    # ResNet: "resnet18", "resnet34", "resnet50" (uses ResNet backbone in SequenceEncoder)
+    # EfficientNet: "efficientnet_b0", "efficientnet_b1", "efficientnet_b2" (uses EfficientNet backbone)
+    # DenseNet: "densenet121", "densenet169", "densenet201" (uses DenseNet backbone)
+    # ViT: "vit_base_patch16_224", "vit_large_patch16_224" (uses ViT backbone)
+    # Multi-Sequence Fusion: "multi_sequence_fusion" (explicit multi-sequence, configurable backbone_type)
+    # Transformer Fusion: "transformer_fusion" (hierarchical attention fusion, best for rare classes)
+    # Adaptive Attention: "adaptive_attention" (multi-scale attention with adaptive fusion, best overall performance)
+    # Simple Multi-Sequence Fusion: "simple_multi_sequence_fusion" (simple concatenation-based fusion, fast training)
+    # BREAKING CHANGE: All architectures now use multi-sequence fusion by default
+    architecture: "resnet18"  # Default: resnet18 for baseline (uses ResNet backbone in multi-sequence fusion)
+    num_labels: 4  # Number of output labels (matches task.num_labels)
+    pretrained: true  # Use ImageNet pretrained weights
+    in_channels: 1  # 1 for grayscale DICOM images, 3 for RGB
+    dropout_rate: 0.5  # Dropout rate before classifier (0.0 to disable, default: 0.5)
+  
+  # Training parameters
+  training:
+    batch_size: 20
+    num_epochs: 100
+    learning_rate: 0.001
+    optimizer: "adam"  # "adam", "sgd", etc.
+    weight_decay: 0.0001
+    scheduler: "cosine"  # "cosine", "step", "plateau", etc.
+    gradient_clip: 1.0  # Gradient clipping value (0.0 to disable)
+    early_stopping:
+      enabled: true  # Enable early stopping
+      patience: 15  # Number of epochs to wait before stopping
+      monitor: "val_macro_f1"  # Metric to monitor ("val_macro_f1", "val_loss")
+      mode: "max"  # "max" for F1, "min" for loss
+      min_delta: 0.001  # Minimum change to qualify as improvement
+  
+  # Data parameters
+  data:
+    input_size: [224, 224]  # Target image size [height, width]
+    augmentation: true  # Apply data augmentation for training
+    augmentation_strength: "medium"  # "light", "medium", or "strong" (default: medium)
+    normalization: "imagenet"  # "imagenet" for pretrained models, "none" for raw images
+    preferred_sequence: "SAG_T2"  # Preferred DICOM sequence (fallback to others if not available)
+  
+  # Loss function
+  loss:
+    type: "bce_with_logits"  # "bce_with_logits", "focal", "focal_with_weights", "asymmetric", or "correlation_aware_focal"
+    # Positive class weights for handling class imbalance
+    # Calculated as: total_samples / (2 * positive_samples_per_class)
+    # Values: [herniation, bulging, spondylolisthesis, narrowing]
+    # Approximate weights based on dataset: [14.5, 3.7, 30.4, 21.2]
+    pos_weights: [7.23, 1.87, 15.19, 10.58]  # Can be auto-calculated from manifest
+    # Focal Loss parameters (when type="focal" or "focal_with_weights")
+    focal:
+      gamma: 2.0  # Focusing parameter (higher = more focus on hard examples)
+      alpha: null  # Alpha weights per class (null for uniform weighting)
+    # Asymmetric Loss parameters (when type="asymmetric")
+    asymmetric:
+      gamma_neg: 4.0  # Focusing parameter for negative examples (false positives)
+      gamma_pos: 1.0  # Focusing parameter for positive examples (false negatives)
+      clip: 0.05  # Probability clipping threshold
+    # Correlation-Aware Focal Loss parameters (when type="correlation_aware_focal")
+    correlation_aware_focal:
+      correlation_weight: 0.5  # Weight for correlation term (0.0 to 1.0)
+    # Alternative: use class_weights for binary classification (deprecated for multi-label)
+    # class_weights: null  # [1.0, 1.0] for balanced classes
+  
+  # Threshold optimization
+  thresholds:
+    optimize: true  # Optimize thresholds on validation set
+    metric: "f1"  # Metric to optimize ("f1", "precision", "recall", "f1_balanced")
+    save_path: "outputs/pathology_model/runs/{timestamp}/thresholds.json"  # Path to save optimal thresholds
+  
+  # Multi-sequence fusion (ALL architectures now use multi-sequence by default)
+  # BREAKING CHANGE: All models (resnet, densenet, efficientnet, vit) now use multi-sequence fusion
+  # The architecture name determines the backbone_type used in SequenceEncoder
+  multi_sequence:
+    # Note: enabled is deprecated - all models now use multi-sequence
+    # Enhanced multi-sequence fusion with pathology-specific attention
+    use_pathology_specific_attention: false  # Enable pathology-aware attention
+    use_clinical_priors: true  # Initialize with clinical knowledge
+    prior_strength: 0.3  # Strength of clinical prior (0.0-1.0)
+    return_attention_weights: true  # Return attention weights for interpretability
+    # Sequences configuration - this can be overridden via command line
+    # Examples:
+    #   All sequences: ["SAG_T2", "SAG_T1", "AX_T2", "SAG_STIR"]
+    #   Two sequences: ["AX_T2", "SAG_STIR"]
+    #   Single sequence: ["AX_T2"]
+    sequences: ["AX_T2", "SAG_STIR"]  # Default: Use AX_T2 and SAG_STIR for current pipeline
+    handle_missing: "zero_pad"  # How to handle missing sequences: "zero_pad", "mask", or "skip"
+    # IVD Metadata Encoding
+    use_ivd_encoding: false  # Enable IVD level encoding (L1-L2, L2-L3, L3-L4, L4-L5, L5-S1)
+    ivd_encoding_mode: "positional"  # Encoding method: "positional" (nn.Embedding) or "label" (direct values)
+    ivd_embedding_dim: 16  # Dimension of IVD level embedding (only used when mode="positional")
+    # For explicit multi_sequence_fusion architecture, can override backbone_type:
+    backbone_type: "densenet121"  # Only used if architecture is 'multi_sequence_fusion'
+    multi_scale:
+      enabled: true  # Enable multi-scale feature extraction
+      scales: [224, 112, 56]  # Input sizes for multi-scale (not used directly, feature dims used instead)
+      feature_dims: [256, 512, 1024]  # Feature dimensions for each scale
+    attention:
+      enabled: true  # Enable cross-sequence attention
+      num_heads: 8  # Number of attention heads
+      dropout: 0.1  # Dropout rate for attention
+    fusion:
+      fusion_dim: 512  # Dimension for fused features
+      head_hidden_dim: 256  # Hidden dimension for class-specific heads
+      head_dropout: 0.3  # Dropout rate for class-specific heads
+  
+  # Adaptive Multi-Scale Attention Network parameters (when model.architecture is 'adaptive_attention')
+  adaptive_attention:
+    backbone: "efficientnet_b0"  # Backbone architecture: "efficientnet_b0", "densenet121", "resnet50"
+    attention_dim: 256  # Dimension for attention mechanisms
+    num_attention_heads: 8  # Number of attention heads
+    attention_dropout: 0.1  # Dropout rate for attention layers
+    fusion_method: "adaptive"  # Feature fusion method: "adaptive", "concat", "weighted"
+  
+  # Simple Multi-Sequence Fusion parameters (when model.architecture is 'simple_multi_sequence_fusion')
+  simple_multi_sequence_fusion:
+    # Sequences configuration - this can be overridden via command line
+    # Examples:
+    #   All sequences: ["SAG_T2", "SAG_T1", "AX_T2", "SAG_STIR"]
+    #   Two sequences: ["AX_T2", "SAG_STIR"]
+    #   Single sequence: ["AX_T2"]
+    sequences: ["AX_T2", "SAG_STIR"]  # Default: Use AX_T2 and SAG_STIR for current pipeline
+    backbone_type: "densenet121"  # Backbone: "resnet18/34/50", "densenet121/169/201", "efficientnet_b0/b1/b2"
+    projection_dim: 10  # Dimension to project each sequence features to (from backbone output)
+    hidden_dim: 128  # Hidden dimension for pathology-specific feedforward networks  
+    dropout_rate: 0.3  # Dropout rate for projection and feedforward layers
+    # IVD Metadata Encoding
+    use_ivd_encoding: false  # Enable IVD level encoding (L1-L2, L2-L3, L3-L4, L4-L5, L5-S1)
+    ivd_encoding_mode: "positional"  # Encoding method: "positional" (nn.Embedding) or "label" (direct values)
+    ivd_embedding_dim: 16  # Dimension of IVD level embedding (only used when mode="positional")
+  
+  # Other parameters
+  seed: 42
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+
+  # ============================================================================
+  # Pfirrmann Grade Detection Configuration
+  # ============================================================================
+  # Configuration for Pfirrmann grade classification (multi-class, grades 1-5)
+  # All models use multi-sequence fusion architecture
+  pfirrman:
+    # Task configuration
+    task:
+      type: "multi_class"  # Multi-class classification (5 classes: grades 1-5)
+      num_classes: 5  # Pfirrmann grades: 1, 2, 3, 4, 5
+      class_names: ["Grade_1", "Grade_2", "Grade_3", "Grade_4", "Grade_5"]
+    
+    # Model parameters
+    model:
+      # Architecture options (ALL use multi-sequence fusion):
+      # ResNet: "resnet18", "resnet34", "resnet50" (uses ResNet backbone in SequenceEncoder)
+      # EfficientNet: "efficientnet_b0", "efficientnet_b1", "efficientnet_b2" (uses EfficientNet backbone)
+      # DenseNet: "densenet121", "densenet169", "densenet201" (uses DenseNet backbone)
+      # ViT: "vit_base_patch16_224", "vit_large_patch16_224" (uses ViT backbone)
+      # All architectures use multi-sequence fusion with single classifier head (not class-specific)
+      architecture: "densenet121"  # Default: densenet121 (good for imbalanced data)
+      num_classes: 5  # Number of output classes (grades 1-5)
+      pretrained: true  # Use ImageNet pretrained weights
+      in_channels: 1  # 1 for grayscale DICOM images
+    
+    # Training parameters
+    training:
+      batch_size: 20  # Smaller batch size recommended for class imbalance
+      num_epochs: 100
+      learning_rate: 0.001
+      optimizer: "adam"  # "adam", "sgd"
+      weight_decay: 0.0001
+      scheduler: "cosine"  # "cosine", "step", "plateau"
+      gradient_clip: 1.0  # Gradient clipping value (0.0 to disable)
+      early_stopping:
+        enabled: true  # Enable early stopping
+        patience: 20  # Number of epochs to wait before stopping (higher for imbalanced data)
+        monitor: "val_overall/weighted_f1"  # Metric to monitor (weighted F1 accounts for class imbalance)
+        mode: "max"  # "max" for F1, "min" for loss
+        min_delta: 0.001  # Minimum change to qualify as improvement
+    
+    # Data parameters
+    data:
+      input_size: [224, 224]  # Target image size [height, width]
+      augmentation: true  # Apply data augmentation for training
+      augmentation_strength: "medium"  # "light", "medium", or "strong"
+      normalization: "imagenet"  # "imagenet" for pretrained models
+      in_channels: 1  # 1 for grayscale DICOM images
+    
+    # Loss function (multi-class)
+    loss:
+      type: "weighted_ce"  # "cross_entropy", "weighted_ce", or "focal_multiclass"
+      # Class weights for handling severe class imbalance
+      # Grade distribution (approximate): Grade 1: 3%, Grade 2: 56%, Grade 3: 34%, Grade 4: 7%, Grade 5: 0.3%
+      # Weights are auto-calculated from training data (inverse frequency)
+      weight_smoothing: 0.1  # Smoothing factor to prevent extreme weights (0.0 to 1.0)
+      # Focal Loss parameters (when type="focal_multiclass")
+      focal:
+        gamma: 2.0  # Focusing parameter (higher = more focus on hard examples)
+        alpha: null  # Alpha weights per class (null for uniform weighting, or list of 5 values)
+        label_smoothing: 0.0  # Label smoothing factor (0.0 to 1.0)
+    
+    # Multi-sequence fusion (same as pathology, but with 5-class output)
+    multi_sequence:
+      sequences: ["SAG_T2", "SAG_T1", "AX_T2", "SAG_STIR"]  # Sequences to use
+      handle_missing: "zero_pad"  # How to handle missing sequences: "zero_pad", "mask", or "skip"
+      feature_dims: [256, 512, 1024]  # Feature dimensions for each scale
+      fusion_dim: 512  # Dimension for fused features
+      attention:
+        num_heads: 8  # Number of attention heads
+        dropout: 0.1  # Dropout rate for attention
+      heads:
+        hidden_dim: 256  # Hidden dimension for classifier head
+        dropout: 0.3  # Dropout rate for classifier head
+
+# Paths (relative to project root)
+paths:
+  data_dir: "data/processed"
+  output_dir: "outputs"
+  checkpoint_dir: "outputs/{experiment_name}/runs/{timestamp}/weights"
+  log_dir: "outputs/{experiment_name}/runs/{timestamp}/logs"
+

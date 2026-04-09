@@ -1,0 +1,111 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+# Note: *.ipynb files are included in repository
+
+# Data files (large files)
+data/raw/*
+data/processed/*
+data/annotations/*
+data/splits/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/annotations/.gitkeep
+!data/splits/.gitkeep
+
+# Model outputs
+outputs/*
+!outputs/.gitkeep
+
+# Weights & Biases
+wandb/
+.wandb/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Unnecessary markdown files (keep local only, don't upload to GitHub)
+backup-context.md
+CURRENT_RESULTS_SUMMARY.md
+PROJECT_REVIEW.md
+QUICK_START.md
+SETUP_GUIDE.md
+TROUBLESHOOTING.md
+README_ENV_SETUP.md
+TEMPLATE_README.md
+TEMPLATE_SUMMARY.md
+HOW_TO_USE_AS_TEMPLATE.md
+Project Structure Template.md
+
+# Documentation markdown files (keep local)
+docs/*.md
+
+# Data processing markdown files (keep local)
+data/processed/*.md
+data/raw/**/*.md
+
+# Generated evaluation reports (keep local)
+outputs/**/*.md
+
+# Generated figures (keep local)
+notebooks/figures/**/*.png
+notebooks/figures/**/*.jpg
+notebooks/figures/**/*.pdf
+
+# PNG images (keep local)
+*.png
+
+
+# Hidden experimental and testing files
+notebooks/
+fig_paper/
+outputs/
+wandb/
+*.pdf
+test_*
+convert_images.py
+README_Pfirrman.md
+scripts/create_*.py

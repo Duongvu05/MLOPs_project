@@ -1,0 +1,150 @@
+# MRI Phenotyping - Multi-Label Pathology Classification
+
+![Python](https://img.shields.io/badge/python-3.10-blue.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)
+![uv](https://img.shields.io/badge/package__manager-uv-magenta.svg)
+![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)
+![Pyright](https://img.shields.io/badge/type_checking-pyright-green.svg)
+![Pytest](https://img.shields.io/badge/testing-pytest-blue.svg)
+
+A deep learning project for automated detection of spinal pathology from MRI DICOM images using the PhenikaaMed dataset. **Note: The dataset utilized in this project is officially permitted and provided by Phenikaa Hospital for research and development purposes.** This project implements multi-label classification to detect four types of spinal pathology: disc herniation, disc bulging, spondylolisthesis, and disc narrowing.
+
+
+## Project Overview
+
+![Model Architecture](assets/model_architecture.png)
+
+This project provides a complete pipeline for:
+- **Multi-label pathology classification** from lumbar spine MRI images
+- **Multi-sequence fusion**: All models automatically fuse information from multiple MRI sequences (SAG_T2, AX_T2, SAG_STIR)
+- **Support for multiple architectures**: ResNet, EfficientNet, DenseNet, and Vision Transformer (ViT) - all with multi-sequence support
+- **Comprehensive evaluation** with automatic model comparison
+- **Experiment tracking** with Weights & Biases (wandb)
+- **Threshold optimization** for improved precision-recall balance
+
+### Task
+
+Predict 4 independent binary pathology labels:
+1. **Disc herniation** - Herniated disc material
+2. **Disc bulging** - Disc bulging beyond normal boundaries
+3. **Spondylolisthesis** - Vertebral slippage
+4. **Disc narrowing** - Disc space narrowing
+
+
+## Installation
+
+### Prerequisites
+
+- Python 3.8 or 3.10 (3.10 recommended)
+- CUDA-capable GPU (recommended for training)
+- [uv](https://astral.sh/uv/) package manager (fast package and environment manager)
+
+### Step 1: Initialize Environment
+
+```bash
+# Create virtual environment using uv
+uv venv --python 3.10
+source .venv/bin/activate
+```
+
+### Step 2: Install PyTorch with CUDA
+
+For NVIDIA RTX 3060 (CUDA 11.8 recommended):
+
+```bash
+# Install PyTorch using uv pip
+uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+Verify CUDA installation:
+```bash
+python -c "import torch; print('CUDA available:', torch.cuda.is_available()); print('CUDA version:', torch.version.cuda)"
+```
+
+### Step 3: Install Project Dependencies
+
+```bash
+# Install all required packages with uv
+uv pip install -r requirements.txt
+
+# (Optional) Install code quality dependencies (ruff, pyright, pytest)
+uv pip install ruff pyright pytest
+```
+
+### Step 4: Verify Installation
+
+```bash
+# Verify MONAI installation
+python -c "import monai; print('MONAI version:', monai.__version__)"
+
+# Verify all imports
+python -c "from models.pathology_model import create_pathology_model; print('✓ Models OK')"
+python -c "from utils.multi_sequence_dataset import MultiSequencePathologyDataset; print('✓ Multi-sequence Dataset OK')"
+python -c "from training.pathology_training_utils import train_epoch; print('✓ Training utils OK')"
+```
+
+
+## Model Architectures
+
+### Supported Architectures
+
+1. **ResNet** (Baseline)
+   - Variants: ResNet-18, ResNet-34, ResNet-50
+   - Good for medical imaging, proven architecture
+   - Fast training and inference
+
+2. **EfficientNet** (Best Performance)
+   - Variants: EfficientNet-B0, EfficientNet-B1, EfficientNet-B2
+   - Compound scaling for efficiency
+   - EfficientNet-B1 is the currently best performing architecture
+
+3. **DenseNet** (High Accuracy)
+   - Variants: DenseNet-121, DenseNet-169, DenseNet-201
+   - Dense connections promote feature reuse
+   - High overall accuracy but lower F1 compared to EfficientNet
+
+4. **Vision Transformer (ViT)** (Advanced)
+   - Variants: ViT-Base, ViT-Large
+   - Self-attention mechanism for global context
+   - State-of-the-art architecture
+
+### Choosing an Architecture
+
+- **For speed**: Use ResNet-18 or EfficientNet-B0
+- **For best performance**: Use EfficientNet-B1 (current best)
+- **For experimentation**: Try ViT-Base for attention-based features
+- **For production**: EfficientNet-B1 with SAG-T2 sequences offers the best balance of diagnostic precision and computational efficiency
+
+
+## Current Results
+
+### Best Model Performance
+
+**Best Overall Model: EfficientNet-B1 (SAG-T2 + Positional Encoding)**
+- **Macro F1 Score**: 50.31%
+- **Accuracy**: 57.78%
+- **Macro ROC-AUC**: 87.46%
+- **Macro Precision**: 60.01%
+- **Macro Recall**: 59.87%
+
+### Model Comparison (SAG-T2 with Positional Encoding)
+
+| Architecture | Accuracy | Recall | Precision | F1-Score | ROC-AUC |
+|--------------|----------|--------|-----------|----------|---------|
+| **EfficientNet-B1** | 57.78 | 59.87 | **60.01** | **50.31** | 87.46 |
+| EfficientNet-B0 | 56.11 | 63.95 | 40.54 | 49.62 | **88.47** |
+| DenseNet | **66.67** | 54.93 | 48.60 | 48.60 | 88.41 |
+| ResNet | 58.89 | 59.98 | 44.40 | 49.33 | 87.43 |
+| EfficientNet-B2 | 53.33 | 66.86 | 32.22 | 43.48 | 84.34 |
+
+### Key Findings
+
+1. **EfficientNet-B1 performs best** overall, successfully mitigating overfitting while capturing pathological features effectively.
+2. **Positional Encoding is Critical**: Using Positional Encoding for Intervertebral Disc (IVD) metadata maps levels into a continuous vector space, improving F1-score substantially compared to standard label encoding.
+3. **Single Sequence Dominance**: Multi-sequence fusion strategies did not yield better diagnostic precision than solely utilizing the dense, information-rich SAG-T2 sequence. 
+
+### Recommendations
+
+1. **Use EfficientNet-B1 with SAG-T2 and Positional Encoding** as the targeted diagnostic setup.
+2. **Focus on Positional Alignment** instead of default label encoding for modeling structural dependencies.
+3. **Optimize compute resources**: Single-sequence processing for SAG-T2 is sufficient and highly prioritized for diagnostic precision.
